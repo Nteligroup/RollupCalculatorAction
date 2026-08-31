@@ -1,83 +1,1189 @@
-public with sharing class RollupCalculatorAction {
+public with sharing class RollupSummaryCalculationInvocable {
 
+    /*
+     * =========================================================
+     * FLOW INPUTS
+     * =========================================================
+     */
     public class RollupRequest {
-        @InvocableVariable(required=true label='Object API Name')
-        public String objectApiName;
 
-        @InvocableVariable(required=true label='Field API Name to Aggregate')
-        public String fieldApiName;
+        /*
+         * COMMON CONFIGURATION
+         */
+        @InvocableVariable(
+            required=true
+            label='01. Parent Record Id'
+            description='Select the parent record Id where the rollup belongs. Example: $Record.Product__c'
+        )
+        public Id parentRecordId;
 
-        @InvocableVariable(required=true label='Operation (SUM, COUNT, MAX, MIN, AVG)')
-        public String operation;
 
-        @InvocableVariable(label='Filter Condition (optional, e.g. AccountId = \'001xx\')')
-        public String filterCondition;
+        @InvocableVariable(
+            required=true
+            label='02. Child Object API Name'
+            description='Enter the API name of the child object containing the records to calculate. Example: Serialized_Inventory__c'
+        )
+        public String childObjectApiName;
+
+
+        @InvocableVariable(
+            required=true
+            label='03. Parent Lookup Field API Name'
+            description='Enter the Lookup or Master-Detail field on the child object that points to the parent. Example: Product__c'
+        )
+        public String parentLookupFieldApiName;
+
+
+        /*
+         * =====================================================
+         * CALCULATION 1
+         * =====================================================
+         */
+        @InvocableVariable(
+            required=true
+            label='04. Calculation 1 - Type'
+            description='Required. Supported values: SUM, COUNT, MIN, MAX, AVG. Example: SUM'
+        )
+        public String calculation1Type;
+
+
+        @InvocableVariable(
+            label='05. Calculation 1 - Aggregate Field'
+            description='Enter a numeric field or relationship path. Example: Purchase_Order_Line__r.Opportunity_Product__r.Quantity. Leave blank for COUNT.'
+        )
+        public String calculation1Field;
+
+
+        @InvocableVariable(
+            label='06. Calculation 1 - Filter'
+            description='Optional SOQL condition without WHERE. Example: Status__c = \'In-Stock\''
+        )
+        public String calculation1Filter;
+
+
+        /*
+         * =====================================================
+         * CALCULATION 2
+         * =====================================================
+         */
+        @InvocableVariable(
+            label='07. Calculation 2 - Type'
+            description='Optional. Supported values: SUM, COUNT, MIN, MAX, AVG.'
+        )
+        public String calculation2Type;
+
+
+        @InvocableVariable(
+            label='08. Calculation 2 - Aggregate Field'
+            description='Numeric field or relationship path. Leave blank for COUNT.'
+        )
+        public String calculation2Field;
+
+
+        @InvocableVariable(
+            label='09. Calculation 2 - Filter'
+            description='Optional SOQL condition without WHERE.'
+        )
+        public String calculation2Filter;
+
+
+        /*
+         * =====================================================
+         * CALCULATION 3
+         * =====================================================
+         */
+        @InvocableVariable(
+            label='10. Calculation 3 - Type'
+            description='Optional. Supported values: SUM, COUNT, MIN, MAX, AVG.'
+        )
+        public String calculation3Type;
+
+
+        @InvocableVariable(
+            label='11. Calculation 3 - Aggregate Field'
+            description='Numeric field or relationship path. Leave blank for COUNT.'
+        )
+        public String calculation3Field;
+
+
+        @InvocableVariable(
+            label='12. Calculation 3 - Filter'
+            description='Optional SOQL condition without WHERE.'
+        )
+        public String calculation3Filter;
+
+
+        /*
+         * =====================================================
+         * CALCULATION 4
+         * =====================================================
+         */
+        @InvocableVariable(
+            label='13. Calculation 4 - Type'
+            description='Optional. Supported values: SUM, COUNT, MIN, MAX, AVG.'
+        )
+        public String calculation4Type;
+
+
+        @InvocableVariable(
+            label='14. Calculation 4 - Aggregate Field'
+            description='Numeric field or relationship path. Leave blank for COUNT.'
+        )
+        public String calculation4Field;
+
+
+        @InvocableVariable(
+            label='15. Calculation 4 - Filter'
+            description='Optional SOQL condition without WHERE.'
+        )
+        public String calculation4Filter;
+
+
+        /*
+         * =====================================================
+         * CALCULATION 5
+         * =====================================================
+         */
+        @InvocableVariable(
+            label='16. Calculation 5 - Type'
+            description='Optional. Supported values: SUM, COUNT, MIN, MAX, AVG.'
+        )
+        public String calculation5Type;
+
+
+        @InvocableVariable(
+            label='17. Calculation 5 - Aggregate Field'
+            description='Numeric field or relationship path. Leave blank for COUNT.'
+        )
+        public String calculation5Field;
+
+
+        @InvocableVariable(
+            label='18. Calculation 5 - Filter'
+            description='Optional SOQL condition without WHERE.'
+        )
+        public String calculation5Filter;
     }
 
-    public class RollupResult {
-        @InvocableVariable(label='Result Value')
-        public Decimal resultValue;
 
-        @InvocableVariable(label='Record Count')
-        public Integer recordCount;
+    /*
+     * =========================================================
+     * FLOW OUTPUTS
+     * =========================================================
+     */
+    public class RollupResponse {
 
-        @InvocableVariable(label='Success')
-        public Boolean isSuccess;
+        @InvocableVariable(
+            label='Parent Record Id'
+        )
+        public Id parentRecordId;
 
-        @InvocableVariable(label='Error Message')
-        public String errorMessage;
+
+        @InvocableVariable(
+            label='Result 1'
+        )
+        public Decimal result1;
+
+
+        @InvocableVariable(
+            label='Result 2'
+        )
+        public Decimal result2;
+
+
+        @InvocableVariable(
+            label='Result 3'
+        )
+        public Decimal result3;
+
+
+        @InvocableVariable(
+            label='Result 4'
+        )
+        public Decimal result4;
+
+
+        @InvocableVariable(
+            label='Result 5'
+        )
+        public Decimal result5;
+
+
+        @InvocableVariable(
+            label='Success'
+        )
+        public Boolean success;
+
+
+        @InvocableVariable(
+            label='Message'
+        )
+        public String message;
     }
 
-    @InvocableMethod(label='Rollup Calculator (Object/Field/Operation)' description='Runs a dynamic aggregate SOQL query based on runtime-selected Object, Field, and Operation')
-    public static List<RollupResult> aggregate(List<RollupRequest> requests) {
-        List<RollupResult> results = new List<RollupResult>();
 
-        for (RollupRequest req : requests) {
-            RollupResult res = new RollupResult();
-            try {
-                String op = req.operation.toUpperCase();
-                Set<String> validOps = new Set<String>{'SUM','COUNT','MAX','MIN','AVG'};
-                if (!validOps.contains(op)) {
-                    throw new IllegalArgumentException('Invalid operation: ' + req.operation);
-                }
+    /*
+     * =========================================================
+     * FLOW ACTION
+     * =========================================================
+     */
+    @InvocableMethod(
+        label='Rollup Summary - Multiple Calculations'
+        description='Perform up to five rollup calculations in one Flow Action. Supports Lookup relationships, relationship field paths, SUM, COUNT, MIN, MAX, AVG, and optional filters.'
+    )
+    public static List<RollupResponse> calculateRollups(
+        List<RollupRequest> requests
+    ) {
 
-                if (!Pattern.matches('^[a-zA-Z0-9_]+$', req.objectApiName) ||
-                    !Pattern.matches('^[a-zA-Z0-9_]+$', req.fieldApiName)) {
-                    throw new IllegalArgumentException('Invalid object or field API name.');
-                }
+        List<RollupResponse> responses =
+            new List<RollupResponse>();
 
-                String soql;
-                if (op == 'COUNT') {
-                    soql = 'SELECT COUNT(Id) cnt FROM ' + req.objectApiName;
-                } else {
-                    soql = 'SELECT ' + op + '(' + req.fieldApiName + ') val, COUNT(Id) cnt FROM ' + req.objectApiName;
-                }
 
-                if (String.isNotBlank(req.filterCondition)) {
-                    soql += ' WHERE ' + req.filterCondition;
-                }
-
-                List<AggregateResult> aggResults = Database.query(soql);
-
-                if (!aggResults.isEmpty()) {
-                    AggregateResult ar = aggResults[0];
-                    res.recordCount = (Integer) ar.get('cnt');
-                    res.resultValue = (op == 'COUNT') ? res.recordCount : (Decimal) ar.get('val');
-                } else {
-                    res.recordCount = 0;
-                    res.resultValue = 0;
-                }
-
-                res.isSuccess = true;
-            } catch (Exception e) {
-                res.isSuccess = false;
-                res.errorMessage = e.getMessage();
-                res.resultValue = null;
-            }
-
-            results.add(res);
+        if (requests == null || requests.isEmpty()) {
+            return responses;
         }
 
-        return results;
+
+        for (RollupRequest requestItem : requests) {
+
+            RollupResponse response =
+                new RollupResponse();
+
+
+            if (requestItem != null) {
+                response.parentRecordId =
+                    requestItem.parentRecordId;
+            }
+
+
+            response.success = false;
+
+
+            try {
+
+                /*
+                 * Validate common inputs.
+                 */
+                validateCommonRequest(
+                    requestItem
+                );
+
+
+                /*
+                 * =================================================
+                 * CALCULATION 1
+                 * =================================================
+                 */
+                response.result1 =
+                    performCalculation(
+                        requestItem.parentRecordId,
+                        requestItem.childObjectApiName,
+                        requestItem.parentLookupFieldApiName,
+                        requestItem.calculation1Type,
+                        requestItem.calculation1Field,
+                        requestItem.calculation1Filter
+                    );
+
+
+                /*
+                 * =================================================
+                 * CALCULATION 2
+                 * =================================================
+                 */
+                if (
+                    String.isNotBlank(
+                        requestItem.calculation2Type
+                    )
+                ) {
+
+                    response.result2 =
+                        performCalculation(
+                            requestItem.parentRecordId,
+                            requestItem.childObjectApiName,
+                            requestItem.parentLookupFieldApiName,
+                            requestItem.calculation2Type,
+                            requestItem.calculation2Field,
+                            requestItem.calculation2Filter
+                        );
+                }
+
+
+                /*
+                 * =================================================
+                 * CALCULATION 3
+                 * =================================================
+                 */
+                if (
+                    String.isNotBlank(
+                        requestItem.calculation3Type
+                    )
+                ) {
+
+                    response.result3 =
+                        performCalculation(
+                            requestItem.parentRecordId,
+                            requestItem.childObjectApiName,
+                            requestItem.parentLookupFieldApiName,
+                            requestItem.calculation3Type,
+                            requestItem.calculation3Field,
+                            requestItem.calculation3Filter
+                        );
+                }
+
+
+                /*
+                 * =================================================
+                 * CALCULATION 4
+                 * =================================================
+                 */
+                if (
+                    String.isNotBlank(
+                        requestItem.calculation4Type
+                    )
+                ) {
+
+                    response.result4 =
+                        performCalculation(
+                            requestItem.parentRecordId,
+                            requestItem.childObjectApiName,
+                            requestItem.parentLookupFieldApiName,
+                            requestItem.calculation4Type,
+                            requestItem.calculation4Field,
+                            requestItem.calculation4Filter
+                        );
+                }
+
+
+                /*
+                 * =================================================
+                 * CALCULATION 5
+                 * =================================================
+                 */
+                if (
+                    String.isNotBlank(
+                        requestItem.calculation5Type
+                    )
+                ) {
+
+                    response.result5 =
+                        performCalculation(
+                            requestItem.parentRecordId,
+                            requestItem.childObjectApiName,
+                            requestItem.parentLookupFieldApiName,
+                            requestItem.calculation5Type,
+                            requestItem.calculation5Field,
+                            requestItem.calculation5Filter
+                        );
+                }
+
+
+                response.success = true;
+
+                response.message =
+                    'All configured rollup calculations completed successfully.';
+
+
+            } catch (Exception ex) {
+
+                response.success = false;
+
+                response.message =
+                    ex.getMessage();
+            }
+
+
+            responses.add(
+                response
+            );
+        }
+
+
+        return responses;
+    }
+
+
+    /*
+     * =========================================================
+     * PERFORM ONE CALCULATION
+     * =========================================================
+     */
+    private static Decimal performCalculation(
+        Id parentRecordId,
+        String childObjectApiName,
+        String parentLookupFieldApiName,
+        String calculationTypeInput,
+        String aggregateFieldApiName,
+        String additionalFilter
+    ) {
+
+        validateCalculation(
+            childObjectApiName,
+            calculationTypeInput,
+            aggregateFieldApiName
+        );
+
+
+        String calculationType =
+            calculationTypeInput
+                .trim()
+                .toUpperCase();
+
+
+        /*
+         * Build SELECT list.
+         */
+        List<String> selectFields =
+            new List<String>();
+
+
+        selectFields.add(
+            'Id'
+        );
+
+
+        if (
+            calculationType != 'COUNT'
+        ) {
+
+            selectFields.add(
+                aggregateFieldApiName
+            );
+        }
+
+
+        /*
+         * Local bind variable.
+         */
+        Id parentId =
+            parentRecordId;
+
+
+        /*
+         * Build dynamic SOQL.
+         */
+        String queryString =
+            'SELECT ' +
+            String.join(
+                selectFields,
+                ', '
+            ) +
+            ' FROM ' +
+            childObjectApiName +
+            ' WHERE ' +
+            parentLookupFieldApiName +
+            ' = :parentId';
+
+
+        /*
+         * Add optional filter.
+         */
+        if (
+            String.isNotBlank(
+                additionalFilter
+            )
+        ) {
+
+            queryString +=
+                ' AND (' +
+                additionalFilter +
+                ')';
+        }
+
+
+        /*
+         * Execute query.
+         */
+        List<SObject> childRecords =
+            Database.query(
+                queryString
+            );
+
+
+        /*
+         * COUNT
+         */
+        if (
+            calculationType == 'COUNT'
+        ) {
+
+            return Decimal.valueOf(
+                String.valueOf(
+                    childRecords.size()
+                )
+            );
+        }
+
+
+        /*
+         * Get values.
+         */
+        List<Decimal> values =
+            new List<Decimal>();
+
+
+        for (
+            SObject childRecord :
+            childRecords
+        ) {
+
+            Object rawValue =
+                getFieldPathValue(
+                    childRecord,
+                    aggregateFieldApiName
+                );
+
+
+            if (rawValue != null) {
+
+                try {
+
+                    Decimal decimalValue =
+                        Decimal.valueOf(
+                            String.valueOf(
+                                rawValue
+                            )
+                        );
+
+
+                    values.add(
+                        decimalValue
+                    );
+
+                } catch (
+                    Exception conversionException
+                ) {
+
+                    throw new RollupException(
+                        'Aggregate field must contain numeric values. Field: ' +
+                        aggregateFieldApiName
+                    );
+                }
+            }
+        }
+
+
+        return calculateValue(
+            values,
+            calculationType
+        );
+    }
+
+
+    /*
+     * =========================================================
+     * READ DIRECT FIELD OR RELATIONSHIP FIELD
+     * =========================================================
+     */
+    private static Object getFieldPathValue(
+        SObject sourceRecord,
+        String fieldPath
+    ) {
+
+        if (
+            sourceRecord == null ||
+            String.isBlank(
+                fieldPath
+            )
+        ) {
+
+            return null;
+        }
+
+
+        List<String> pathParts =
+            fieldPath.split(
+                '\\.'
+            );
+
+
+        SObject currentRecord =
+            sourceRecord;
+
+
+        for (
+            Integer i = 0;
+            i < pathParts.size();
+            i++
+        ) {
+
+            String pathPart =
+                pathParts[i];
+
+
+            /*
+             * Last part = field.
+             */
+            if (
+                i ==
+                pathParts.size() - 1
+            ) {
+
+                return currentRecord.get(
+                    pathPart
+                );
+            }
+
+
+            /*
+             * Relationship traversal.
+             */
+            currentRecord =
+                currentRecord.getSObject(
+                    pathPart
+                );
+
+
+            if (
+                currentRecord == null
+            ) {
+
+                return null;
+            }
+        }
+
+
+        return null;
+    }
+
+
+    /*
+     * =========================================================
+     * CALCULATION LOGIC
+     * =========================================================
+     */
+    private static Decimal calculateValue(
+        List<Decimal> values,
+        String calculationType
+    ) {
+
+        /*
+         * No qualifying records = zero.
+         */
+        if (
+            values == null ||
+            values.isEmpty()
+        ) {
+
+            return 0;
+        }
+
+
+        /*
+         * SUM
+         */
+        if (
+            calculationType == 'SUM'
+        ) {
+
+            Decimal total = 0;
+
+
+            for (
+                Decimal value :
+                values
+            ) {
+
+                total += value;
+            }
+
+
+            return total;
+        }
+
+
+        /*
+         * AVG
+         */
+        if (
+            calculationType == 'AVG'
+        ) {
+
+            Decimal total = 0;
+
+
+            for (
+                Decimal value :
+                values
+            ) {
+
+                total += value;
+            }
+
+
+            return total /
+                values.size();
+        }
+
+
+        /*
+         * MIN
+         */
+        if (
+            calculationType == 'MIN'
+        ) {
+
+            Decimal minimumValue =
+                values[0];
+
+
+            for (
+                Decimal value :
+                values
+            ) {
+
+                if (
+                    value <
+                    minimumValue
+                ) {
+
+                    minimumValue =
+                        value;
+                }
+            }
+
+
+            return minimumValue;
+        }
+
+
+        /*
+         * MAX
+         */
+        if (
+            calculationType == 'MAX'
+        ) {
+
+            Decimal maximumValue =
+                values[0];
+
+
+            for (
+                Decimal value :
+                values
+            ) {
+
+                if (
+                    value >
+                    maximumValue
+                ) {
+
+                    maximumValue =
+                        value;
+                }
+            }
+
+
+            return maximumValue;
+        }
+
+
+        throw new RollupException(
+            'Unsupported Calculation Type: ' +
+            calculationType
+        );
+    }
+
+
+    /*
+     * =========================================================
+     * VALIDATE COMMON INPUTS
+     * =========================================================
+     */
+    private static void validateCommonRequest(
+        RollupRequest requestItem
+    ) {
+
+        if (
+            requestItem == null
+        ) {
+
+            throw new RollupException(
+                'Request cannot be null.'
+            );
+        }
+
+
+        if (
+            requestItem.parentRecordId ==
+            null
+        ) {
+
+            throw new RollupException(
+                'Parent Record Id is required.'
+            );
+        }
+
+
+        if (
+            String.isBlank(
+                requestItem.childObjectApiName
+            )
+        ) {
+
+            throw new RollupException(
+                'Child Object API Name is required.'
+            );
+        }
+
+
+        if (
+            String.isBlank(
+                requestItem.parentLookupFieldApiName
+            )
+        ) {
+
+            throw new RollupException(
+                'Parent Lookup Field API Name is required.'
+            );
+        }
+
+
+        if (
+            String.isBlank(
+                requestItem.calculation1Type
+            )
+        ) {
+
+            throw new RollupException(
+                'Calculation 1 Type is required.'
+            );
+        }
+
+
+        /*
+         * Validate child object.
+         */
+        Map<String, Schema.SObjectType> globalDescribe =
+            Schema.getGlobalDescribe();
+
+
+        if (
+            !globalDescribe.containsKey(
+                requestItem.childObjectApiName
+            )
+        ) {
+
+            throw new RollupException(
+                'Invalid Child Object API Name: ' +
+                requestItem.childObjectApiName
+            );
+        }
+
+
+        Schema.DescribeSObjectResult childDescribe =
+            globalDescribe
+                .get(
+                    requestItem.childObjectApiName
+                )
+                .getDescribe();
+
+
+        Map<String, Schema.SObjectField> childFields =
+            childDescribe
+                .fields
+                .getMap();
+
+
+        /*
+         * Validate parent lookup field.
+         */
+        if (
+            !childFields.containsKey(
+                requestItem.parentLookupFieldApiName
+            )
+        ) {
+
+            throw new RollupException(
+                'Invalid Parent Lookup Field API Name: ' +
+                requestItem.parentLookupFieldApiName
+            );
+        }
+
+
+        /*
+         * Verify it is a relationship field.
+         */
+        Schema.DescribeFieldResult parentFieldDescribe =
+            childFields
+                .get(
+                    requestItem.parentLookupFieldApiName
+                )
+                .getDescribe();
+
+
+        List<Schema.SObjectType> parentTypes =
+            parentFieldDescribe
+                .getReferenceTo();
+
+
+        if (
+            parentTypes == null ||
+            parentTypes.isEmpty()
+        ) {
+
+            throw new RollupException(
+                'Parent Lookup Field must be a Lookup or Master-Detail relationship field: ' +
+                requestItem.parentLookupFieldApiName
+            );
+        }
+    }
+
+
+    /*
+     * =========================================================
+     * VALIDATE CALCULATION
+     * =========================================================
+     */
+    private static void validateCalculation(
+        String childObjectApiName,
+        String calculationTypeInput,
+        String aggregateFieldApiName
+    ) {
+
+        if (
+            String.isBlank(
+                calculationTypeInput
+            )
+        ) {
+
+            throw new RollupException(
+                'Calculation Type cannot be blank.'
+            );
+        }
+
+
+        String calculationType =
+            calculationTypeInput
+                .trim()
+                .toUpperCase();
+
+
+        Set<String> supportedCalculations =
+            new Set<String>{
+                'SUM',
+                'COUNT',
+                'MIN',
+                'MAX',
+                'AVG'
+            };
+
+
+        if (
+            !supportedCalculations.contains(
+                calculationType
+            )
+        ) {
+
+            throw new RollupException(
+                'Unsupported Calculation Type: ' +
+                calculationTypeInput +
+                '. Use SUM, COUNT, MIN, MAX, or AVG.'
+            );
+        }
+
+
+        /*
+         * COUNT doesn't need an aggregate field.
+         */
+        if (
+            calculationType == 'COUNT'
+        ) {
+
+            return;
+        }
+
+
+        if (
+            String.isBlank(
+                aggregateFieldApiName
+            )
+        ) {
+
+            throw new RollupException(
+                'Aggregate Field is required for ' +
+                calculationType +
+                '.'
+            );
+        }
+
+
+        validateFieldPath(
+            childObjectApiName,
+            aggregateFieldApiName
+        );
+    }
+
+
+    /*
+     * =========================================================
+     * VALIDATE FIELD / RELATIONSHIP PATH
+     * =========================================================
+     */
+    private static void validateFieldPath(
+        String startingObjectApiName,
+        String fieldPath
+    ) {
+
+        if (
+            String.isBlank(
+                fieldPath
+            )
+        ) {
+
+            throw new RollupException(
+                'Aggregate Field cannot be blank.'
+            );
+        }
+
+
+        Map<String, Schema.SObjectType> globalDescribe =
+            Schema.getGlobalDescribe();
+
+
+        Schema.SObjectType currentObjectType =
+            globalDescribe.get(
+                startingObjectApiName
+            );
+
+
+        if (
+            currentObjectType == null
+        ) {
+
+            throw new RollupException(
+                'Invalid starting object: ' +
+                startingObjectApiName
+            );
+        }
+
+
+        List<String> pathParts =
+            fieldPath.split(
+                '\\.'
+            );
+
+
+        for (
+            Integer i = 0;
+            i < pathParts.size();
+            i++
+        ) {
+
+            Schema.DescribeSObjectResult currentDescribe =
+                currentObjectType
+                    .getDescribe();
+
+
+            Map<String, Schema.SObjectField> currentFields =
+                currentDescribe
+                    .fields
+                    .getMap();
+
+
+            String pathPart =
+                pathParts[i];
+
+
+            /*
+             * Final part = actual field.
+             */
+            if (
+                i ==
+                pathParts.size() - 1
+            ) {
+
+                if (
+                    !currentFields.containsKey(
+                        pathPart
+                    )
+                ) {
+
+                    throw new RollupException(
+                        'Invalid field "' +
+                        pathPart +
+                        '" in Aggregate Field Path: ' +
+                        fieldPath
+                    );
+                }
+
+
+                return;
+            }
+
+
+            /*
+             * Find relationship.
+             */
+            Schema.SObjectType relatedObjectType =
+                null;
+
+
+            for (
+                Schema.SObjectField fieldToken :
+                currentFields.values()
+            ) {
+
+                Schema.DescribeFieldResult fieldDescribe =
+                    fieldToken
+                        .getDescribe();
+
+
+                String relationshipName =
+                    fieldDescribe
+                        .getRelationshipName();
+
+
+                if (
+                    relationshipName != null &&
+                    relationshipName.equalsIgnoreCase(
+                        pathPart
+                    )
+                ) {
+
+                    List<Schema.SObjectType> referenceTypes =
+                        fieldDescribe
+                            .getReferenceTo();
+
+
+                    if (
+                        referenceTypes != null &&
+                        !referenceTypes.isEmpty()
+                    ) {
+
+                        relatedObjectType =
+                            referenceTypes[0];
+
+
+                        break;
+                    }
+                }
+            }
+
+
+            if (
+                relatedObjectType == null
+            ) {
+
+                throw new RollupException(
+                    'Invalid relationship "' +
+                    pathPart +
+                    '" in Aggregate Field Path: ' +
+                    fieldPath
+                );
+            }
+
+
+            currentObjectType =
+                relatedObjectType;
+        }
+    }
+
+
+    /*
+     * =========================================================
+     * CUSTOM EXCEPTION
+     * =========================================================
+     */
+    public class RollupException extends Exception {
     }
 }
