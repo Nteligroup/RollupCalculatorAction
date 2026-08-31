@@ -1,22 +1,13 @@
-Built a reusable Rollup/Aggregate Invocable Action for Flow with help from Claude. It allows us to perform SUM, COUNT, MAX, MIN, and AVG on child records—for example, summing Purchase Order Line quantities related to an Opportunity.
-The main benefit is that we can do this using just one Action element in Flow, without needing Get Records, Loops, or Assignments. It also works with regular Lookup relationships, not just Master-Detail.
-Sharing the code and setup steps below in case anyone else finds it useful or wants to reuse it. Thanks
+A reusable Apex Invocable Action for Salesforce Flow that provides rollup and aggregate functionality for relationships where standard Salesforce Roll-Up Summary fields may not be available.
+Salesforce native Roll-Up Summary fields require a Master-Detail relationship. This utility can also perform aggregate calculations across Lookup relationships, making it useful for more flexible data models.
 
-Configuration Steps
-
-1. Setup → Apex Classes → New. Or through Developer Console.
-2. In Flow Builder, add an Action and search for “Rollup Calculator (Object/Field/Operation)”.
-3. Configure the inputs:
-
-Object API Name: Purchase_Order_Line__c
-Field API Name: Quantity__c
-Operation: SUM
-        (It also supports COUNT, MAX, MIN, and AVG.)
- Filter Condition ,  For example:
-        Purchase_Order__r.Opportunity__c = '{!$Record.Id}'
-4. Under Store Output Values, map the output values to Flow variables:
-
-Result Value
-Record Count
-Success
-Error
+**Features**
+Supports SUM, COUNT, MIN, MAX, and AVG.
+Supports standard Lookup and Master-Detail relationships.
+Supports relationship field paths.
+Supports optional SOQL filter conditions.
+Performs up to five calculations in a single Flow Action.
+Returns a separate result for each configured calculation.
+Returns Success and Message outputs for troubleshooting.
+Designed to be reusable across different Salesforce objects and Flows.
+Reduces the need for Get Records, Loops, Assignments, and multiple Action elements.
